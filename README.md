@@ -21,7 +21,7 @@ Allows AI assistants like Claude to search and retrieve legal documents (comment
 ### 1. Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/beck-online-mcp.git
+git clone https://github.com/speydril/beck-online-mcp.git
 cd beck-online-mcp
 npm install
 npx playwright install chromium
@@ -30,7 +30,21 @@ npm run build
 
 ### 2. First login
 
-On first use, the server launches a browser for OAuth login + 2FA. You'll need to enter your 2FA code when prompted. After login, session cookies are saved to `~/.beck-online-mcp/cookies.json` and the browser closes. Subsequent requests use fast HTTP — no browser needed until the session expires.
+On first use, run with `BECK_HEADLESS=false` so you can see the browser and complete 2FA:
+
+```bash
+BECK_USERNAME=your-user BECK_PASSWORD=your-pass BECK_HEADLESS=false npm run dev
+```
+
+The server will:
+1. Open a Chromium browser
+2. Navigate to beck-online's OAuth login (account.beck.de)
+3. Fill your credentials automatically
+4. Prompt you in the terminal for your 2FA code (from your authenticator app)
+5. Save session cookies to `~/.beck-online-mcp/cookies.json`
+6. Close the browser
+
+After that, all requests use fast HTTP with the saved cookies. The browser only re-opens when the session expires.
 
 ### 3. Configure Claude Desktop
 
@@ -105,6 +119,23 @@ npm run dev          # Run with tsx (needs BECK_USERNAME/BECK_PASSWORD env vars)
 npm run build        # Build with tsup
 npm test             # Run tests
 ```
+
+## Troubleshooting
+
+**"Session expired" on every request**
+Your cookies have expired. Delete `~/.beck-online-mcp/cookies.json` and run with `BECK_HEADLESS=false` to re-authenticate.
+
+**"Access denied" for a document**
+The document is not included in your beck-online subscription. Search results may include documents from modules you don't have access to.
+
+**"Cloudflare Turnstile" message**
+Some document pages require a Turnstile challenge that can't be solved via HTTP. The TOC (`beck_get_toc`) is usually still accessible. Try accessing the document directly in your browser.
+
+**Browser doesn't open during login**
+Make sure Chromium is installed: `npx playwright install chromium`
+
+**2FA code prompt doesn't appear**
+The 2FA prompt is sent to stderr. If using Claude Desktop, set `BECK_HEADLESS=false` and run manually first to complete the initial login, then switch back to headless for Claude Desktop.
 
 ## License
 

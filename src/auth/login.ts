@@ -40,8 +40,19 @@ export async function loginWithBrowser(): Promise<CookieData[]> {
       return extractCookies(context);
     }
 
-    if (!url.includes('account.beck.de')) {
-      throw new BeckAuthError(`Unexpected page during login: ${url}`);
+    // Sometimes the redirect chain is slow — if still on beck-online login page, wait and retry
+    if (url.includes('beck-online.beck.de/Konto') || url.includes('beck-online.beck.de/Login')) {
+      await page.waitForTimeout(5000);
+      const retryUrl = page.url();
+      if (!retryUrl.includes('account.beck.de')) {
+        // Try navigating directly to account.beck.de
+        await page.goto('https://account.beck.de/Login', { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForTimeout(2000);
+      }
+    }
+
+    if (!page.url().includes('account.beck.de')) {
+      throw new BeckAuthError(`Unexpected page during login: ${page.url()}`);
     }
 
     // Dismiss cookie consent overlay
