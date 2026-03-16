@@ -27,7 +27,9 @@ export class Session {
       }
     }
 
-    await this.login();
+    throw new BeckSessionExpiredError(
+      'No valid session found. Please run "npm run login" in the beck-mcp project directory to authenticate, then retry.'
+    );
   }
 
   async login(): Promise<void> {
@@ -48,10 +50,12 @@ export class Session {
   }
 
   async handleSessionExpired(): Promise<void> {
-    console.error('[beck-mcp] Session expired, re-authenticating...');
+    console.error('[beck-mcp] Session expired. Please run "npm run login" in the beck-mcp directory to re-authenticate.');
     this.cookies = [];
     this.cookieHeader = '';
-    await this.login();
+    throw new BeckSessionExpiredError(
+      'Session expired. Please run "npm run login" in the beck-mcp project directory to re-authenticate, then retry.'
+    );
   }
 
   private setCookies(cookies: CookieData[]) {
